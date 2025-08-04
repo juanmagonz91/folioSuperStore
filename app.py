@@ -62,8 +62,8 @@ gbm_model = train_model(X_train, y_train)
 
 # Evaluate the model and determine optimized threshold (cached)
 @st.cache_data
-def evaluate_model(model, X_test, y_test):
-    y_pred_proba = model.predict_proba(X_test)[:, 1]
+def evaluate_model(_model, X_test, y_test):
+    y_pred_proba = _model.predict_proba(X_test)[:, 1]
     roc_auc = roc_auc_score(y_test, y_pred_proba)
 
     # Experiment with different thresholds to find an optimized one for recall
