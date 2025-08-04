@@ -177,6 +177,7 @@ st.subheader("Descuento vs. Ganancia (Filtrado)")
 if not filtered_df.empty:
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.scatterplot(data=filtered_df, x='Discount', y='Profit', hue='Sub-Category', alpha=0.6, ax=ax)
+    ax.legend(title='Sub-Category', bbox_to_anchor=(1.05, 1), loc='upper left')
     ax.set_title('Relación entre Descuento y Ganancia (Filtrado)')
     ax.set_xlabel('Descuento')
     ax.set_ylabel('Ganancia')
