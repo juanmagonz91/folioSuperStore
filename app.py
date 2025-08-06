@@ -160,7 +160,7 @@ with col1:
         axes[0].set_title('Histograma de Ganancias (Filtrado)')
         sns.boxplot(x=filtered_df['Profit'], ax=axes[1], color='lightgreen')
         axes[1].set_title('Boxplot de Ganancias (Filtrado)')
-        plt.tight_layout()
+        plt.tight_layout(h_pad=3.0) # Added h_pad to increase vertical space
         st.pyplot(fig)
         plt.close(fig)
     else:
