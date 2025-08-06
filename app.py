@@ -369,33 +369,33 @@ st.write(f"**AUC:** {roc_auc:.4f}")
 # Add some visual flair (basic styling)
 st.markdown(
     """
-    <style>
-    .stApp {
-        background-color: #f0f2f6;
+   <style>
+    body {
+        background-color: #f0f2f6; /* Light gray background */
     }
     .stSidebar {
-        background-color: #e0e0e0;
+        background-color: #e0e0e0; /* Slightly darker sidebar */
     }
     h1, h2, h3 {
-        color: #333;
+        color: #333; /* Darker text for headers */
     }
     .stButton>button {
-        background-color: #4CAF50;
+        background-color: #4CAF50; /* Green button */
         color: white;
         font-weight: bold;
     }
     .stButton>button:hover {
-        background-color: #45a049;
+        background-color: #45a049; /* Darker green on hover */
     }
     .stWarning {
-        background-color: #fff3cd;
+        background-color: #fff3cd; /* Light yellow for warnings */
         color: #856404;
         padding: 1rem;
         border-radius: 5px;
         border: 1px solid #ffeeba;
     }
      .stSuccess {
-        background-color: #d4edda;
+        background-color: #d4edda; /* Light green for success */
         color: #155724;
         padding: 1rem;
         border-radius: 5px;
