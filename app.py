@@ -10,6 +10,10 @@ import numpy as np
 import joblib # To potentially save/load the model if needed, though caching is used here
 import kagglehub # Import kagglehub to download the dataset
 
+# Set Streamlit page configuration for better appearance
+st.set_page_config(layout="wide", page_title="Super Store Sales Analysis", page_icon="📊")
+
+
 # Load the data
 @st.cache_data
 def load_data():
@@ -62,8 +66,8 @@ gbm_model = train_model(X_train, y_train)
 
 # Evaluate the model and determine optimized threshold (cached)
 @st.cache_data
-def evaluate_model(_model, X_test, y_test):
-    y_pred_proba = _model.predict_proba(X_test)[:, 1]
+def evaluate_model(model, X_test, y_test):
+    y_pred_proba = model.predict_proba(X_test)[:, 1]
     roc_auc = roc_auc_score(y_test, y_pred_proba)
 
     # Experiment with different thresholds to find an optimized one for recall
@@ -83,13 +87,18 @@ def evaluate_model(_model, X_test, y_test):
 OPTIMIZED_THRESHOLD, roc_auc = evaluate_model(gbm_model, X_test, y_test)
 
 
-st.title("Super Store Sales Analysis Dashboard")
+st.title("📊 Dashboard de Análisis de Ventas Super Store")
+st.markdown("""
+    ¡Bienvenido al Dashboard de Análisis de Ventas de Super Store!
+    Explora los datos de ventas y ganancias, y utiliza un modelo predictivo
+    para identificar transacciones potencialmente no rentables.
+""")
 
 # Sidebar for controls
 st.sidebar.header("Panel de Control")
 
 # Add exploratory data analysis widgets
-st.sidebar.subheader("Análisis Exploratorio de Datos")
+st.sidebar.subheader("Filtros de Datos")
 selected_region = st.sidebar.selectbox(
     "Seleccionar Región",
     options=['Todas'] + list(df['Region'].unique())
@@ -125,14 +134,22 @@ filtered_df = filtered_df[
 ]
 
 # Main content area
-st.header("Análisis Exploratorio de Datos")
-st.markdown("Explora visualizaciones y resúmenes basados en tus selecciones en el Panel de Control.")
+st.header("Exploración de Datos")
+st.markdown("Utiliza los filtros en el panel de control para explorar los datos de ventas y ganancias.")
 
 # Display EDA plots and tables (from previous step)
 col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("Distribución de Ganancias")
+    st.markdown("""
+        Este gráfico muestra cómo se distribuyen las ganancias (Profit) en las transacciones.
+        El **Histograma** muestra la frecuencia de las ganancias en diferentes rangos.
+        El **Boxplot** resume la distribución, mostrando la mediana (línea central),
+        los cuartiles (caja) y los valores atípicos (puntos).
+        Un sesgo positivo (cola larga a la derecha en el histograma, valores atípicos altos en el boxplot)
+        indica que hay algunas transacciones con ganancias excepcionalmente altas.
+    """)
     if not filtered_df.empty:
         fig, axes = plt.subplots(2, 1, figsize=(8, 8))
         sns.histplot(filtered_df['Profit'], bins=50, kde=True, ax=axes[0], color='skyblue')
@@ -143,11 +160,16 @@ with col1:
         st.pyplot(fig)
         plt.close(fig)
     else:
-        st.write("No hay datos disponibles para la distribución de Ganancias con los filtros actuales.")
+        st.warning("No hay datos disponibles para la distribución de Ganancias con los filtros actuales.")
 
 
 with col2:
     st.subheader("Distribución por Categoría")
+    st.markdown("""
+        Este gráfico de barras muestra la cantidad de transacciones por cada categoría de producto.
+        Permite ver qué categorías tienen un mayor volumen de ventas.
+        En el análisis previo, vimos que 'Office Supplies' domina en cantidad de transacciones.
+    """)
     if not filtered_df.empty:
         fig, ax = plt.subplots(figsize=(8, 6))
         sns.countplot(y='Category', data=filtered_df, order=filtered_df['Category'].value_counts().index, palette='pastel', ax=ax)
@@ -157,9 +179,14 @@ with col2:
         st.pyplot(fig)
         plt.close(fig)
     else:
-        st.write("No hay datos disponibles para la distribución por Categoría con los filtros actuales.")
+        st.warning("No hay datos disponibles para la distribución por Categoría con los filtros actuales.")
 
 st.subheader("Distribución por Subcategoría")
+st.markdown("""
+    Este gráfico muestra la frecuencia de transacciones para cada subcategoría de producto.
+    Es útil para identificar las subcategorías más populares en términos de volumen de ventas.
+    Nuestro análisis anterior destacó 'Binders' y 'Paper' como las subcategorías con más transacciones.
+""")
 if not filtered_df.empty:
     fig, ax = plt.subplots(figsize=(10, max(5, len(filtered_df['Sub-Category'].unique()) * 0.5)))
     sns.countplot(y='Sub-Category', data=filtered_df, order=filtered_df['Sub-Category'].value_counts().index, palette='viridis', ax=ax)
@@ -170,14 +197,20 @@ if not filtered_df.empty:
     st.pyplot(fig)
     plt.close(fig)
 else:
-    st.write("No hay datos disponibles para la distribución por Subcategoría con los filtros actuales.")
+    st.warning("No hay datos disponibles para la distribución por Subcategoría con los filtros actuales.")
 
 
-st.subheader("Descuento vs. Ganancia (Filtrado)")
+st.subheader("Descuento vs. Ganancia")
+st.markdown("""
+    Este gráfico de dispersión muestra la relación entre el descuento aplicado a una transacción
+    y la ganancia resultante. Cada punto representa una transacción.
+    Es crucial para entender cómo los descuentos altos pueden impactar negativamente la rentabilidad,
+    especialmente para subcategorías problemáticas como 'Bookcases' y 'Tables'.
+    Observa cómo, a menudo, los puntos con descuentos altos caen por debajo de 0 en el eje de Ganancia.
+""")
 if not filtered_df.empty:
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.scatterplot(data=filtered_df, x='Discount', y='Profit', hue='Sub-Category', alpha=0.6, ax=ax)
-    ax.legend(title='Sub-Category', bbox_to_anchor=(1.05, 1), loc='upper left')
     ax.set_title('Relación entre Descuento y Ganancia (Filtrado)')
     ax.set_xlabel('Descuento')
     ax.set_ylabel('Ganancia')
@@ -185,10 +218,15 @@ if not filtered_df.empty:
     st.pyplot(fig)
     plt.close(fig)
 else:
-     st.write("No hay datos disponibles para el gráfico de dispersión Descuento vs. Ganancia con los filtros actuales.")
+     st.warning("No hay datos disponibles para el gráfico de dispersión Descuento vs. Ganancia con los filtros actuales.")
 
 
-st.subheader("Tablas Resumen (Filtrado)")
+st.subheader("Tablas Resumen")
+st.markdown("""
+    Estas tablas muestran las ventas y ganancias totales agrupadas por Categoría y Subcategoría
+    para los datos filtrados. Son útiles para identificar rápidamente las áreas más o menos rentables.
+    Nuestro análisis previo destacó la baja rentabilidad de 'Furniture' y las pérdidas en 'Bookcases' y 'Tables'.
+""")
 if not filtered_df.empty:
     category_summary_filtered = filtered_df.groupby('Category').agg({'Sales': 'sum', 'Profit': 'sum'}).reset_index()
     st.write("Ventas y Ganancias Totales por Categoría (Filtrado):")
@@ -198,12 +236,15 @@ if not filtered_df.empty:
     st.write("Ventas y Ganancias Totales por Subcategoría (Filtrado):")
     st.dataframe(subcategory_summary_filtered)
 else:
-    st.write("No hay datos disponibles para las Tablas Resumen con los filtros actuales.")
+    st.warning("No hay datos disponibles para las Tablas Resumen con los filtros actuales.")
 
 
 # --- Predictive Analysis Section ---
-st.header("Análisis Predictivo: Predecir Rentabilidad de Transacciones")
-st.markdown("Utiliza el modelo para predecir si una transacción hipotética será no rentable.")
+st.header("🤖 Análisis Predictivo: Predecir Rentabilidad de Transacciones")
+st.markdown("""
+    Utiliza el modelo de Machine Learning entrenado para predecir si una transacción hipotética
+    será rentable o no rentable.
+""")
 
 # Input widgets for a hypothetical transaction
 st.subheader("Introduce los Detalles de la Transacción:")
@@ -264,15 +305,20 @@ if st.button("Predecir Rentabilidad"):
     st.write(f"Clasificación Predicha (usando umbral {OPTIMIZED_THRESHOLD:.2f}): **{predicted_class}**")
 
     if predicted_class == "No Rentable":
-        st.warning("Se predice que esta transacción será no rentable.")
+        st.error("⚠️ ¡Atención! Se predice que esta transacción será no rentable.")
     else:
-        st.success("Se predice que esta transacción será rentable.")
+        st.success("✅ ¡Buenas noticias! Se predice que esta transacción será rentable.")
 
 
 # Display Feature Importances
 st.subheader("Importancia de las Características del Modelo")
-st.markdown("Comprende qué factores el modelo considera más importantes para predecir la falta de rentabilidad.")
-
+st.markdown("""
+    Este gráfico muestra la importancia relativa de cada característica para el modelo predictivo.
+    Una barra más larga indica que la característica es más influyente en la predicción de
+    la falta de rentabilidad.
+    Como vimos en el análisis previo, se espera que el 'Descuento' sea la característica
+    más importante.
+""")
 # Access feature importances from the trained model
 feature_importances = gbm_model.feature_importances_
 feature_importances_series = pd.Series(feature_importances, index=X_train.columns)
@@ -290,8 +336,16 @@ plt.close(fig)
 
 # Display Model Evaluation Metrics (Optional, based on previous analysis)
 st.subheader("Métricas de Evaluación del Modelo")
-st.markdown(f"El modelo fue evaluado con un umbral optimizado de {OPTIMIZED_THRESHOLD:.2f} para mejorar la identificación de transacciones no rentables.")
-
+st.markdown(f"""
+    Estas métricas evalúan el rendimiento del modelo en el conjunto de datos de prueba,
+    utilizando un umbral optimizado de **{OPTIMIZED_THRESHOLD:.2f}** que prioriza la
+    identificación de transacciones no rentables (Recall).
+    - **Exactitud (Accuracy):** Proporción de predicciones correctas.
+    - **Precisión (Precision):** Proporción de transacciones predichas como no rentables que realmente lo son.
+    - **Exhaustividad (Recall):** Proporción de transacciones no rentables reales que el modelo identificó correctamente.
+    - **Puntuación F1 (F1-score):** Media armónica de Precisión y Recall.
+    - **AUC:** Área bajo la curva ROC, mide la capacidad del modelo para distinguir entre clases.
+""")
 # Recalculate metrics with the optimized threshold for display
 y_pred_optimized = (gbm_model.predict_proba(X_test)[:, 1] >= OPTIMIZED_THRESHOLD).astype(int)
 accuracy_opt = accuracy_score(y_test, y_pred_optimized)
@@ -304,3 +358,43 @@ st.write(f"**Precisión:** {precision_opt:.4f}")
 st.write(f"**Exhaustividad (Recall):** {recall_opt:.4f}")
 st.write(f"**Puntuación F1:** {f1_opt:.4f}")
 st.write(f"**AUC:** {roc_auc:.4f}")
+
+# Add some visual flair (basic styling)
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #f0f2f6;
+    }
+    .stSidebar {
+        background-color: #e0e0e0;
+    }
+    h1, h2, h3 {
+        color: #333;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        font-weight: bold;
+    }
+    .stButton>button:hover {
+        background-color: #45a049;
+    }
+    .stWarning {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ffeeba;
+    }
+     .stSuccess {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 1rem;
+        border-radius: 5px;
+        border: 1px solid #c3e6cb;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
