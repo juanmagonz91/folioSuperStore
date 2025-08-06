@@ -219,6 +219,9 @@ if not filtered_df.empty:
     ax.set_xlabel('Descuento')
     ax.set_ylabel('Ganancia')
     ax.grid(True)
+    # Move the legend outside the plot
+    ax.legend(title='Sub-Category', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
     st.pyplot(fig)
     plt.close(fig)
 else:
