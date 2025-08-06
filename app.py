@@ -62,11 +62,15 @@ def train_model(X_train, y_train):
     gbm_model.fit(X_train, y_train)
     return gbm_model
 
+# Access the trained model (cached)
 gbm_model = train_model(X_train, y_train)
 
 # Evaluate the model and determine optimized threshold (cached)
 @st.cache_data
-def evaluate_model(model, X_test, y_test):
+def evaluate_model(X_test, y_test): # Removed model argument
+    # Access the cached model within the function
+    model = train_model(X_train, y_train) # Access the cached model here
+
     y_pred_proba = model.predict_proba(X_test)[:, 1]
     roc_auc = roc_auc_score(y_test, y_pred_proba)
 
@@ -84,7 +88,7 @@ def evaluate_model(model, X_test, y_test):
 
     return optimized_threshold, roc_auc
 
-OPTIMIZED_THRESHOLD, roc_auc = evaluate_model(gbm_model, X_test, y_test)
+OPTIMIZED_THRESHOLD, roc_auc = evaluate_model(X_test, y_test) # Pass only hashable arguments
 
 
 st.title("📊 Dashboard de Análisis de Ventas Super Store")
